@@ -2,17 +2,15 @@
 game_engine.py
 Motor principal de Knight Energy.
 
-Orquesta el flujo completo de la partida:
-- Turnos alternados (máquina siempre inicia)
-- Validación de energía antes de mover
-- Penalización por turno perdido
-- Detección de fin de juego
-- Interfaz de entrada para el jugador humano
+Día 6: integración completa con la UI mejorada.
+- Tablero con movimientos resaltados durante el turno del humano
+- Selección de movimiento por número índice
+- Divisores visuales entre turnos
+- Soporte para jugar múltiples partidas
 """
 
 from __future__ import annotations
 
-from game.board import Board
 from game.game_state import GameState
 from game.knight import get_valid_moves, has_moves
 from ui.display import Display
@@ -24,9 +22,8 @@ class GameEngine:
 
     Parámetros
     ----------
-    difficulty : str  — 'principiante' | 'amateur' | 'experto'
-    ai_player  : objeto con método choose_move(state) -> tuple | None
-                 (se inyectará en Día 5; por ahora acepta None para modo demo)
+    difficulty : str       — 'principiante' | 'amateur' | 'experto'
+    ai_player  : MinimaxAI — agente IA inyectado desde main.py
     """
 
     DEPTH_MAP = {
@@ -39,23 +36,23 @@ class GameEngine:
         if difficulty not in self.DEPTH_MAP:
             raise ValueError(f"Dificultad inválida: '{difficulty}'. "
                              f"Opciones: {list(self.DEPTH_MAP)}")
-        self.difficulty  = difficulty
-        self.depth       = self.DEPTH_MAP[difficulty]
-        self.ai_player   = ai_player
-        self.state       = GameState()
-        self.display     = Display()
+        self.difficulty = difficulty
+        self.depth      = self.DEPTH_MAP[difficulty]
+        self.ai_player  = ai_player
+        self.display    = Display(clear_screen=False)
 
-    # ── Bucle principal ──────────────────────────────────────────────────────
+    # ── Punto de entrada ─────────────────────────────────────────────────────
 
     def run(self):
-        """Ejecuta la partida completa."""
+        """Ejecuta una partida completa."""
+        self.state = GameState()
         self.display.show_welcome(self.difficulty, self.depth)
         self.display.show_board(self.state)
 
         while not self.state.game_over:
             self._play_turn()
 
-        self._show_result()
+        self.display.show_game_over(self.state)
 
     # ── Turno ────────────────────────────────────────────────────────────────
 
@@ -64,35 +61,29 @@ class GameEngine:
         player_id = self.state.current_turn
         player    = self.state.current_player
 
+        self.display.show_turn_divider(self.state.turn_number)
         self.display.show_status(self.state)
 
-        # ── Sin movimientos posibles en el tablero ───────────────────────────
+        # ── Sin casillas alcanzables ─────────────────────────────────────────
         if not has_moves(self.state.board, player_id):
             if not player.can_move():
-                # Sin energía Y sin casillas → skip con penalización
                 self.display.show_no_energy(player)
                 self.state.apply_skip()
             else:
-                # Con energía pero bloqueado → skip sin penalización
-                # (el otro jugador aún puede moverse; el juego continúa)
                 self.display.show_blocked(player)
                 self._skip_no_penalty()
             return
 
-        # ── Sin energía (pero hay casillas alcanzables) ──────────────────────
+        # ── Sin energía (hay casillas pero no puede moverse) ─────────────────
         if not player.can_move():
             self.display.show_no_energy(player)
             self.state.apply_skip()
             return
 
-        # ── Elegir movimiento ────────────────────────────────────────────────
-        if player_id == 0:
-            move = self._machine_move()
-        else:
-            move = self._human_move()
+        # ── Elegir y aplicar movimiento ──────────────────────────────────────
+        move = self._machine_move() if player_id == 0 else self._human_move()
 
         if move is None:
-            # Seguridad: no debería ocurrir en este punto
             return
 
         summary = self.state.apply_move(move)
@@ -102,7 +93,6 @@ class GameEngine:
     # ── Turno de la máquina ──────────────────────────────────────────────────
 
     def _machine_move(self) -> tuple | None:
-        """Delega la decisión al motor de IA (o elige aleatoriamente si aún no está conectado)."""
         if self.ai_player is not None:
             move  = self.ai_player.choose_move(self.state)
             stats = self.ai_player.get_stats()
@@ -117,59 +107,78 @@ class GameEngine:
     # ── Turno del humano ─────────────────────────────────────────────────────
 
     def _human_move(self) -> tuple | None:
-        """Solicita al humano que elija un movimiento válido."""
+        """
+        Muestra el tablero con los movimientos resaltados,
+        lista numerada y permite elegir por índice.
+        """
         valid_moves = get_valid_moves(self.state.board, 1)
-        self.display.show_valid_moves(valid_moves)
+
+        # Mostrar tablero con destinos resaltados
+        self.display.show_board(self.state, highlighted=valid_moves)
+
+        # Listar movimientos con información de casillas especiales
+        self.display.show_valid_moves(
+            valid_moves,
+            board_stars  = self.state.board.star_cells,
+            board_energy = self.state.board.energy_cells,
+        )
 
         while True:
-            raw = input("\n  Tu movimiento (fila col): ").strip()
-            parsed = self._parse_input(raw)
+            raw = input("\n  Tu movimiento (número): ").strip()
 
-            if parsed is None:
-                print("  ⚠  Formato inválido. Escribe dos números: fila col  (ej: 3 5)")
+            # Aceptar tanto número índice como coordenadas "fila col"
+            chosen = self._parse_index(raw, valid_moves)
+            if chosen is None:
+                chosen = self._parse_coords(raw)
+
+            if chosen is None:
+                print("  ⚠  Entrada inválida. Escribe el número del movimiento "
+                      "o las coordenadas (fila col).")
                 continue
 
-            if parsed not in valid_moves:
-                print(f"  ⚠  Movimiento {parsed} no válido. Elige de la lista.")
+            if chosen not in valid_moves:
+                print(f"  ⚠  Posición {chosen} no está en la lista. Intenta de nuevo.")
                 continue
 
-            return parsed
+            return chosen
 
     # ── Skip sin penalización ────────────────────────────────────────────────
 
     def _skip_no_penalty(self):
-        """
-        El jugador está bloqueado por el tablero (no por falta de energía).
-        Pierde el turno pero NO se le descuentan puntos.
-        """
         player = self.state.current_player
-        event  = (
+        self.state.history.append(
             f"Turno {self.state.turn_number} | {player.name}: "
             "BLOQUEADO — sin casillas alcanzables (sin penalización)"
         )
-        self.state.history.append(event)
         self.state.turn_number  += 1
         self.state.current_turn  = 1 - self.state.current_turn
         if self.state.is_terminal():
             self.state._resolve_winner()
 
-    # ── Resultado final ──────────────────────────────────────────────────────
-
-    def _show_result(self):
-        self.display.show_game_over(self.state)
-
-    # ── Utilidades ───────────────────────────────────────────────────────────
+    # ── Parseo de entrada ────────────────────────────────────────────────────
 
     @staticmethod
-    def _parse_input(raw: str) -> tuple | None:
-        """Convierte '3 5' → (3, 5). Retorna None si el formato es inválido."""
+    def _parse_index(raw: str,
+                     moves: list[tuple[int,int]]) -> tuple | None:
+        """'2' → moves[2] si es un índice válido."""
+        try:
+            idx = int(raw.strip())
+            if 0 <= idx < len(moves):
+                return moves[idx]
+        except ValueError:
+            pass
+        return None
+
+    @staticmethod
+    def _parse_coords(raw: str) -> tuple | None:
+        """'3 5' → (3, 5). Retorna None si el formato es inválido."""
         try:
             parts = raw.split()
             if len(parts) != 2:
                 return None
             r, c = int(parts[0]), int(parts[1])
-            if not (0 <= r <= 7 and 0 <= c <= 7):
-                return None
-            return (r, c)
+            if 0 <= r <= 7 and 0 <= c <= 7:
+                return (r, c)
         except (ValueError, IndexError):
-            return None
+            pass
+        return None
