@@ -69,7 +69,7 @@ class Display:
 
     # ── Máquina pensando ─────────────────────────────────────────────────────
 
-    def show_machine_thinking(self, difficulty: str):
+    def show_machine_thinking(self, difficulty: str, stats: dict | None = None):
         delays = {"principiante": 0.3, "amateur": 0.6, "experto": 1.0}
         delay  = delays.get(difficulty, 0.5)
         print("\n  ♘ Máquina calculando", end="", flush=True)
@@ -77,6 +77,9 @@ class Display:
             time.sleep(delay / 3)
             print(".", end="", flush=True)
         print()
+        if stats:
+            print(f"     Nodos evaluados: {stats['nodes_evaluated']}  "
+                  f"| Ramas podadas: {stats['nodes_pruned']}")
 
     # ── Resumen de movimiento ────────────────────────────────────────────────
 

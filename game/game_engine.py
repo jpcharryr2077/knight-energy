@@ -41,7 +41,7 @@ class GameEngine:
                              f"Opciones: {list(self.DEPTH_MAP)}")
         self.difficulty  = difficulty
         self.depth       = self.DEPTH_MAP[difficulty]
-        self.ai_player   = ai_player          # Se conecta en Día 5
+        self.ai_player   = ai_player
         self.state       = GameState()
         self.display     = Display()
 
@@ -104,14 +104,14 @@ class GameEngine:
     def _machine_move(self) -> tuple | None:
         """Delega la decisión al motor de IA (o elige aleatoriamente si aún no está conectado)."""
         if self.ai_player is not None:
-            move = self.ai_player.choose_move(self.state)
+            move  = self.ai_player.choose_move(self.state)
+            stats = self.ai_player.get_stats()
+            self.display.show_machine_thinking(self.difficulty, stats=stats)
         else:
-            # Modo demo (Días 3-4): elige el primer movimiento disponible
             moves = get_valid_moves(self.state.board, 0)
             move  = moves[0] if moves else None
-
-        if move:
-            self.display.show_machine_thinking(self.difficulty)
+            if move:
+                self.display.show_machine_thinking(self.difficulty)
         return move
 
     # ── Turno del humano ─────────────────────────────────────────────────────

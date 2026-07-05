@@ -4,12 +4,19 @@ Punto de entrada de Knight Energy.
 """
 
 from game.game_engine import GameEngine
+from ai.minimax import MinimaxAI
 
 
 DIFFICULTIES = {
     "1": "principiante",
     "2": "amateur",
     "3": "experto",
+}
+
+DEPTH_MAP = {
+    "principiante": 2,
+    "amateur":      4,
+    "experto":      6,
 }
 
 
@@ -31,7 +38,9 @@ def select_difficulty() -> str:
 
 def main():
     difficulty = select_difficulty()
-    engine     = GameEngine(difficulty=difficulty, ai_player=None)
+    depth      = DEPTH_MAP[difficulty]
+    ai         = MinimaxAI(depth=depth)
+    engine     = GameEngine(difficulty=difficulty, ai_player=ai)
     engine.run()
 
 

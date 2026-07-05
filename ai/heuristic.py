@@ -222,4 +222,3 @@ def evaluate_verbose(state: "GameState") -> float:
     print("  └──────────────────────────────────────────────────")
 
     return total
-
