@@ -1,6 +1,6 @@
 """
 knight.py
-Lógica de movimientos del caballo en Knight Energy.
+Lógica de movimientos del caballo.
 
 El caballo se mueve en L siguiendo las reglas del ajedrez:
 los 8 posibles desplazamientos (±1,±2) y (±2,±1).

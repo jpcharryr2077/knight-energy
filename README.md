@@ -62,3 +62,5 @@ knight_energy/
 
 ## Autores
 
+Proyecto académico — Ficha 3336052  
+Análisis y Desarrollo de Software · Universidad del Valle

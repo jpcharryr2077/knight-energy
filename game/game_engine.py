@@ -1,8 +1,8 @@
 """
 game_engine.py
-Motor principal de Knight Energy.
+Motor principal.
 
-Día 6: integración completa con la UI mejorada.
+Integración completa con la UI mejorada.
 - Tablero con movimientos resaltados durante el turno del humano
 - Selección de movimiento por número índice
 - Divisores visuales entre turnos

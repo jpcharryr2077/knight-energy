@@ -1,6 +1,6 @@
 """
 heuristic.py
-Función de utilidad heurística para el árbol Minimax de Knight Energy.
+Función de utilidad heurística para el árbol Minimax.
 
 La función evalúa un estado del juego desde la perspectiva de la máquina
 (jugador 0 = MAX). Un valor positivo favorece a la máquina; negativo, al humano.

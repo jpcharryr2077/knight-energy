@@ -1,6 +1,6 @@
 """
 minimax.py
-Algoritmo Minimax con poda Alfa-Beta para Knight Energy.
+Algoritmo Minimax con poda Alfa-Beta.
 
 Arquitectura
 ────────────

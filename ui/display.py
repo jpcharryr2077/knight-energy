@@ -66,7 +66,6 @@ class Display:
             _clear()
         print("\n" + SEP_MAJOR)
         print("│" + "    ♞   K N I G H T   E N E R G Y   ♘    ".center(52) + "│")
-        print("│" + "   Universidad del Valle · IA 2026-I   ".center(52) + "│")
         print(SEP_MAJOR)
         print(f"│  {'Dificultad':<20} {difficulty.capitalize():<30}│")
         print(f"│  {'Profundidad Minimax':<20} {depth:<30}│")
