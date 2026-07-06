@@ -1,6 +1,6 @@
 """
 game_state.py
-Estado completo del juego Knight Energy.
+Estado completo del juego.
 
 Encapsula toda la información mutable de una partida:
 energía y puntos de cada jugador, turno actual,

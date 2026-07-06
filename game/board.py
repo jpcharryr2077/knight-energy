@@ -1,6 +1,6 @@
 """
 board.py
-Tablero de ajedrez 8x8 para Knight Energy.
+Tablero de ajedrez 8x8.
 
 Contiene la definición de las casillas y la clase Board que maneja
 la colocación aleatoria de caballos, estrellas y energías.
@@ -62,7 +62,7 @@ BOARD_SIZE    = 8
 
 class Board:
     """
-    Tablero 8x8 de Knight Energy.
+    Tablero 8x8.
 
     Atributos
     ---------
